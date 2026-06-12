@@ -7,11 +7,10 @@ function crearRol(cupos) {
 }
 
 // Forma completa de un "evento"
-function crearEvento({ id, titulo, codigo, fechaHora, creadorId, roles }) {
+function crearEvento({ id, titulo, fechaHora, creadorId, roles }) {
   return {
     id,
     titulo,
-    codigo,
     fechaHora, // objeto Date de JavaScript
     cerrado: false,
     creadorId,

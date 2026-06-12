@@ -72,8 +72,7 @@ function crearEmbed(evento) {
           ? "Evento cerrado"
           : formatearCountdown(evento.fechaHora),
         inline: true,
-      },
-      { name: "🚩 Código", value: `/join ${evento.codigo}`, inline: false },
+      },  
     );
 
   // Una field por cada rol, mostrando cupos e inscritos
