@@ -22,7 +22,7 @@ function crearSelectMenu(evento) {
 
     const opcion = {
       label: meta.nombre,
-      description: truncar(lleno ? `${cuposTexto} — Lleno` : `${meta.loot} · ${cuposTexto}`, 100),
+      description: truncar(lleno ? `${cuposTexto} — Lleno` : `${cuposTexto}`, 100),
       value: meta.value,
       default: false,
       disabled: lleno,
