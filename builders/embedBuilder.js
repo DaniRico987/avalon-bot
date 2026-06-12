@@ -1,35 +1,42 @@
 const { EmbedBuilder } = require("discord.js");
-
-function formatearFecha(fecha) {
-  return fecha.toLocaleString("es-ES", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+const { ROLES_RAID } = require("../config/eventTemplates");
+const { formatearTimestampsDiscord } = require("../utils/timeUtils");
+const { formatearNombreRol } = require("../utils/roleIcons");
 
 function crearEmbed(evento) {
-  const campos = Object.entries(evento.roles).map(([nombre, rol]) => {
+  const tiempos = formatearTimestampsDiscord(evento.fechaHora);
+
+  const campos = ROLES_RAID.map((meta) => {
+    const rol = evento.roles[meta.nombre];
     const lista =
       rol.miembros.length > 0
         ? rol.miembros.map((m) => m.nombre).join("\n")
         : "—";
 
     return {
-      name: `${nombre} (${rol.miembros.length}/${rol.cupos})`,
+      name: `${formatearNombreRol(meta)} (${rol.miembros.length}/${rol.cupos})`,
       value: lista,
       inline: true,
     };
   });
 
+  const descripcionPartes = [
+    evento.descripcion,
+    "",
+    `**Cuándo:** ${tiempos.absoluto}`,
+    `**Falta:** ${tiempos.relativo}`,
+  ];
+
   const embed = new EmbedBuilder()
     .setTitle(evento.titulo)
-    .setDescription(`**Fecha:** ${formatearFecha(evento.fechaHora)}`)
+    .setDescription(descripcionPartes.join("\n"))
     .addFields(campos)
     .setColor(evento.cerrado ? 0xed4245 : 0x5865f2)
-    .setFooter({ text: evento.cerrado ? "Evento cerrado" : "Elige tu rol con el menú de abajo" })
+    .setFooter({
+      text: evento.cerrado
+        ? "Evento cerrado — ya no se aceptan inscripciones"
+        : "Cada persona ve la hora en su zona horaria · Elige tu rol abajo",
+    })
     .setTimestamp(evento.fechaHora);
 
   return embed;
