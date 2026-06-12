@@ -1,65 +1,41 @@
 require("dotenv").config();
 
-const {
-  Client,
-  GatewayIntentBits,
-  REST,
-  Routes,
-} = require("discord.js");
-const crearEvento = require("./commands/crearEvento");
-const { handleSignup } = require("./handlers/signupHandler");
-
-const comandos = [crearEvento];
+const { Client, Collection, GatewayIntentBits } = require("discord.js");
+const fs = require("fs");
+const path = require("path");
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds],
 });
 
-client.once("ready", async () => {
-  console.log(`Conectado como ${client.user.tag}`);
+client.commands = new Collection();
 
-  const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
-  const cuerpo = comandos.map((cmd) => cmd.data.toJSON());
+const carpetaComandos = path.join(__dirname, "commands");
+const archivosComandos = fs.readdirSync(carpetaComandos).filter((f) => f.endsWith(".js"));
 
-  try {
-    await rest.put(Routes.applicationCommands(client.user.id), { body: cuerpo });
-    console.log("Comandos slash registrados.");
-  } catch (error) {
-    console.error("Error al registrar comandos:", error);
+for (const archivo of archivosComandos) {
+  const ruta = path.join(carpetaComandos, archivo);
+  const comando = require(ruta);
+  if (comando.data && comando.execute) {
+    client.commands.set(comando.data.name, comando);
   }
-});
+}
 
-client.on("interactionCreate", async (interaction) => {
-  try {
-    if (interaction.isChatInputCommand()) {
-      const comando = comandos.find((cmd) => cmd.data.name === interaction.commandName);
-      if (comando) {
-        await comando.execute(interaction);
-      }
-      return;
-    }
+const carpetaEventos = path.join(__dirname, "events");
+const archivosEventos = fs.readdirSync(carpetaEventos).filter((f) => f.endsWith(".js"));
 
-    if (interaction.isStringSelectMenu()) {
-      if (interaction.customId.startsWith("raid_signup:")) {
-        await handleSignup(interaction);
-      }
-    }
-  } catch (error) {
-    console.error("Error en interacción:", error);
-
-    const mensaje = { content: "Ocurrió un error al procesar la acción.", ephemeral: true };
-    if (interaction.replied || interaction.deferred) {
-      await interaction.followUp(mensaje);
-    } else {
-      await interaction.reply(mensaje);
-    }
+for (const archivo of archivosEventos) {
+  const evento = require(path.join(carpetaEventos, archivo));
+  if (evento.once) {
+    client.once(evento.name, (...args) => evento.execute(...args));
+  } else {
+    client.on(evento.name, (...args) => evento.execute(...args));
   }
-});
+}
 
-const token = process.env.DISCORD_TOKEN;
-if (!token) {
+if (!process.env.DISCORD_TOKEN) {
   console.error("Falta DISCORD_TOKEN en el archivo .env");
   process.exit(1);
 }
 
-client.login(token);
+client.login(process.env.DISCORD_TOKEN);

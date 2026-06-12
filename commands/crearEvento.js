@@ -1,87 +1,76 @@
 const { SlashCommandBuilder } = require("discord.js");
-const { crearEvento, crearRol } = require("../utils/eventoSchema");
-const { agregarEvento } = require("../utils/eventoStore");
-const { crearEmbed } = require("../builders/embedBuilder");
-const { crearSelectMenu } = require("../builders/selectMenuBuilder");
-const { ROLES_DEFAULT } = require("../config/eventTemplates");
+const { crearEvento } = require("../utils/eventoSchema");
+const { agregarEvento, actualizarEvento } = require("../utils/eventoStore");
+const { crearRolesDesdePlantilla } = require("../config/eventTemplates");
+const { crearMensajeRaid } = require("../builders/selectMenuBuilder");
+
+function generarId() {
+  return `evt_${Date.now().toString(36)}`;
+}
+
+function parsearFecha(texto) {
+  const fecha = new Date(texto);
+  if (Number.isNaN(fecha.getTime())) {
+    return null;
+  }
+  return fecha;
+}
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("crear-evento")
-    .setDescription("Crea un nuevo evento de raid")
-    .addStringOption((opcion) =>
-      opcion
-        .setName("titulo")
-        .setDescription("Título del evento")
-        .setRequired(true),
-    )
-    .addStringOption((opcion) =>
-      opcion
-        .setName("fecha")
-        .setDescription("Fecha del evento (formato: AAAA-MM-DD)")
-        .setRequired(true),
-    )
-    .addStringOption((opcion) =>
-      opcion
-        .setName("hora")
-        .setDescription("Hora del evento (formato: HH:MM)")
-        .setRequired(true),
+    .setName("event")
+    .setDescription("Gestiona eventos de raid")
+    .addSubcommand((sub) =>
+      sub
+        .setName("create")
+        .setDescription("Crea un nuevo evento de raid")
+        .addStringOption((opt) =>
+          opt.setName("titulo").setDescription("Nombre del evento").setRequired(true)
+        )
+        .addStringOption((opt) =>
+          opt
+            .setName("fecha")
+            .setDescription("Fecha y hora (ej: 2026-06-15 20:00)")
+            .setRequired(true)
+        )
     ),
 
   async execute(interaction) {
+    if (interaction.options.getSubcommand() !== "create") {
+      return;
+    }
+
     const titulo = interaction.options.getString("titulo");
-    const fecha = interaction.options.getString("fecha");
-    const hora = interaction.options.getString("hora");
+    const fechaTexto = interaction.options.getString("fecha");
+    const fechaHora = parsearFecha(fechaTexto);
 
-    // Combinar fecha y hora en un solo Date
-    const fechaHoraTexto = `${fecha}T${hora}:00`;
-    const fechaHora = new Date(fechaHoraTexto);
-
-    // Validar que sea una fecha válida
-    if (isNaN(fechaHora.getTime())) {
+    if (!fechaHora) {
       await interaction.reply({
-        content:
-          "❌ Formato de fecha u hora inválido. Usa el formato AAAA-MM-DD para la fecha y HH:MM para la hora.",
+        content: "Fecha inválida. Usa un formato como `2026-06-15 20:00`.",
         ephemeral: true,
       });
       return;
     }
 
-    // Validar que no sea en el pasado
-    if (fechaHora.getTime() < Date.now()) {
-      await interaction.reply({
-        content: "❌ La fecha y hora del evento no pueden estar en el pasado.",
-        ephemeral: true,
-      });
-      return;
-    }
-
-    // Construir los roles a partir de la plantilla por defecto
-    const roles = {};
-    for (const [nombreRol, cupos] of Object.entries(ROLES_DEFAULT)) {
-      roles[nombreRol] = crearRol(cupos);
-    }
-
-    // Construir el objeto evento
     const evento = crearEvento({
-      id: interaction.id,
+      id: generarId(),
       titulo,
       fechaHora,
       creadorId: interaction.user.id,
-      roles,
+      roles: crearRolesDesdePlantilla(),
     });
 
-    // Guardar el evento
     agregarEvento(evento);
 
-    // Generar embed y select menu
-    const embed = crearEmbed(evento);
-    const selectMenu = crearSelectMenu(evento);
+    const mensaje = await interaction.channel.send(crearMensajeRaid(evento));
 
-    // Enviar el mensaje del evento
+    evento.mensajeId = mensaje.id;
+    evento.canalId = mensaje.channel.id;
+    actualizarEvento(evento.id, evento);
+
     await interaction.reply({
-      embeds: [embed],
-      components: [selectMenu],
+      content: `Evento **${titulo}** creado.`,
+      ephemeral: true,
     });
   },
 };

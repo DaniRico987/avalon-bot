@@ -1,22 +1,20 @@
-// Forma de un "rol" dentro del evento
 function crearRol(cupos) {
   return {
-    cupos: cupos,
-    miembros: [], // cada elemento: { id: "123456789", nombre: "rolan35" }
+    cupos,
+    miembros: [],
   };
 }
 
-// Forma completa de un "evento"
-function crearEvento({ id, titulo, fechaHora, creadorId, roles }) {
+function crearEvento({ id, titulo, fechaHora, creadorId, roles, mensajeId = null, canalId = null }) {
   return {
     id,
     titulo,
-    fechaHora, // objeto Date de JavaScript
+    fechaHora,
     cerrado: false,
     creadorId,
     mensajeId,
     canalId,
-    roles, // objeto: { "Caller": crearRol(1), "Falce": crearRol(3), ... }
+    roles,
   };
 }
 
