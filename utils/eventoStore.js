@@ -3,7 +3,18 @@ const path = require("path");
 
 const RUTA_ARCHIVO = path.join(__dirname, "..", "data", "eventos.json");
 
+function asegurarArchivo() {
+  const directorio = path.dirname(RUTA_ARCHIVO);
+  if (!fs.existsSync(directorio)) {
+    fs.mkdirSync(directorio, { recursive: true });
+  }
+  if (!fs.existsSync(RUTA_ARCHIVO)) {
+    fs.writeFileSync(RUTA_ARCHIVO, "{}", "utf-8");
+  }
+}
+
 function cargarEventos() {
+  asegurarArchivo();
   const contenido = fs.readFileSync(RUTA_ARCHIVO, "utf-8");
   const eventos = JSON.parse(contenido);
 
