@@ -14,6 +14,8 @@ function crearEvento({ id, titulo, fechaHora, creadorId, roles }) {
     fechaHora, // objeto Date de JavaScript
     cerrado: false,
     creadorId,
+    mensajeId,
+    canalId,
     roles, // objeto: { "Caller": crearRol(1), "Falce": crearRol(3), ... }
   };
 }
