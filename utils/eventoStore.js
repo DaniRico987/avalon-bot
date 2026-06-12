@@ -47,10 +47,16 @@ function actualizarEvento(id, eventoActualizado) {
   guardarEventos(eventos);
 }
 
+function obtenerEventosAbiertos() {
+  const eventos = cargarEventos();
+  return Object.values(eventos).filter((evento) => !evento.cerrado);
+}
+
 module.exports = {
   cargarEventos,
   guardarEventos,
   obtenerEvento,
   agregarEvento,
   actualizarEvento,
+  obtenerEventosAbiertos,
 };

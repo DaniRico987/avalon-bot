@@ -5,10 +5,20 @@ function crearRol(cupos) {
   };
 }
 
-function crearEvento({ id, titulo, fechaHora, creadorId, roles, mensajeId = null, canalId = null }) {
+function crearEvento({
+  id,
+  titulo,
+  descripcion,
+  fechaHora,
+  creadorId,
+  roles,
+  mensajeId = null,
+  canalId = null,
+}) {
   return {
     id,
     titulo,
+    descripcion,
     fechaHora,
     cerrado: false,
     creadorId,

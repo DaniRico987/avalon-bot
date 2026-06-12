@@ -1,6 +1,8 @@
 const { Events, REST, Routes } = require("discord.js");
 const path = require("path");
 const fs = require("fs");
+const { iniciarScheduler } = require("../utils/eventScheduler");
+const { sincronizarEmojisRoles } = require("../utils/emojiSync");
 
 module.exports = {
   name: Events.ClientReady,
@@ -19,6 +21,9 @@ module.exports = {
 
     const rest = new REST().setToken(process.env.DISCORD_TOKEN);
     await rest.put(Routes.applicationCommands(client.user.id), { body: comandos });
+
+    await sincronizarEmojisRoles(client);
+    iniciarScheduler(client);
 
     console.log(`Bot conectado como ${client.user.tag}`);
     console.log(`${comandos.length} comando(s) registrado(s).`);

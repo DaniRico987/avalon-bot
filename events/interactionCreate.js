@@ -2,6 +2,7 @@ const { Events } = require("discord.js");
 const { obtenerEvento, actualizarEvento } = require("../utils/eventoStore");
 const { obtenerRolPorValue } = require("../config/eventTemplates");
 const { parsearCustomId, crearMensajeRaid } = require("../builders/selectMenuBuilder");
+const { MODAL_ID, manejarModalCreate } = require("../commands/crearEvento");
 
 function quitarUsuarioDeRoles(evento, userId) {
   for (const rol of Object.values(evento.roles)) {
@@ -82,6 +83,25 @@ module.exports = {
       } catch (error) {
         console.error(error);
         const respuesta = { content: "Hubo un error al ejecutar el comando.", ephemeral: true };
+        if (interaction.replied || interaction.deferred) {
+          await interaction.followUp(respuesta);
+        } else {
+          await interaction.reply(respuesta);
+        }
+      }
+      return;
+    }
+
+    if (interaction.isModalSubmit()) {
+      if (interaction.customId !== MODAL_ID) {
+        return;
+      }
+
+      try {
+        await manejarModalCreate(interaction);
+      } catch (error) {
+        console.error(error);
+        const respuesta = { content: "Hubo un error al crear el evento.", ephemeral: true };
         if (interaction.replied || interaction.deferred) {
           await interaction.followUp(respuesta);
         } else {

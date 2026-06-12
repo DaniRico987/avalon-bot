@@ -1,6 +1,7 @@
 const { ActionRowBuilder, StringSelectMenuBuilder } = require("discord.js");
 const { ROLES_RAID } = require("../config/eventTemplates");
 const { crearEmbed } = require("./embedBuilder");
+const { obtenerEmojiOpcion } = require("../utils/roleIcons");
 
 const CUSTOM_ID_PREFIX = "raid_signup";
 
@@ -9,27 +10,37 @@ function truncar(texto, max) {
 }
 
 function crearSelectMenu(evento) {
+  if (evento.cerrado) {
+    return null;
+  }
+
   const opciones = ROLES_RAID.map((meta) => {
     const rol = evento.roles[meta.nombre];
     const lleno = rol.miembros.length >= rol.cupos;
     const cuposTexto = `${rol.miembros.length}/${rol.cupos} cupos`;
+    const emoji = obtenerEmojiOpcion(meta);
 
-    return {
+    const opcion = {
       label: meta.nombre,
       description: truncar(lleno ? `${cuposTexto} — Lleno` : `${meta.loot} · ${cuposTexto}`, 100),
       value: meta.value,
       default: false,
-      disabled: lleno || evento.cerrado,
+      disabled: lleno,
     };
+
+    if (emoji) {
+      opcion.emoji = emoji;
+    }
+
+    return opcion;
   });
 
   return new StringSelectMenuBuilder()
     .setCustomId(`${CUSTOM_ID_PREFIX}:${evento.id}`)
-    .setPlaceholder(evento.cerrado ? "Evento cerrado" : "Elige tu rol")
+    .setPlaceholder("Elige tu rol")
     .setMinValues(1)
     .setMaxValues(1)
-    .addOptions(opciones)
-    .setDisabled(evento.cerrado);
+    .addOptions(opciones);
 }
 
 function parsearCustomId(customId) {
@@ -42,12 +53,13 @@ function parsearCustomId(customId) {
 function crearMensajeRaid(evento) {
   const embed = crearEmbed(evento);
   const selectMenu = crearSelectMenu(evento);
-  const row = new ActionRowBuilder().addComponents(selectMenu);
 
-  return {
-    embeds: [embed],
-    components: [row],
-  };
+  if (!selectMenu) {
+    return { embeds: [embed], components: [] };
+  }
+
+  const row = new ActionRowBuilder().addComponents(selectMenu);
+  return { embeds: [embed], components: [row] };
 }
 
 module.exports = { crearSelectMenu, crearMensajeRaid, parsearCustomId, CUSTOM_ID_PREFIX };
