@@ -24,7 +24,7 @@ function crearEmbed(evento) {
     evento.descripcion,
     "",
     `**Cuándo:** ${tiempos.absoluto}`,
-    `**Falta:** ${tiempos.relativo}`,
+    `**Tiempo:** ${tiempos.relativo}`,
   ];
 
   const embed = new EmbedBuilder()
